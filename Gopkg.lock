@@ -3,21 +3,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/btccom/secp256k1-go"
-  packages = ["secp256k1"]
-  revision = "f7178bcde5780809c6f819d62c3e7a37c635e749"
-
-[[projects]]
-  branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   revision = "1432d294a5b055c297457c25434efbf13384cc46"
-
-[[projects]]
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/kristjank/ark-go"
@@ -27,36 +15,6 @@
   ]
   revision = "6fc4a17af7ae114f2fc90dac589839052ddb9ebb"
   version = "v0.9.6"
-
-[[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
-
-[[projects]]
-  name = "github.com/stretchr/testify"
-  packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/tones111/go-opencl"
-  packages = ["cl"]
-  revision = "f73eb20e2eb1c3fcd7450bfab31649cacea5d37f"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/tones111/raw"
-  packages = ["."]
-  revision = "aacded4044b56af30c1071e57e5d986feba7a178"
 
 [[projects]]
   branch = "master"
@@ -73,15 +31,9 @@
   ]
   revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
-[[projects]]
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b1c04015b0bc1a423d6d43a1afe66be552e09075df333b74ea437a516a27c7c1"
+  inputs-digest = "6154f20fab97f376478255efaa9c622a21edb705002939c77212e36a3e829d05"
   solver-name = "gps-cdcl"
   solver-version = 1
