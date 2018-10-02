@@ -87,8 +87,8 @@ func main() {
 			}
 			response := <-channel
 			if response[2] == "Y" {
-				fmt.Println("Passphrase:", response[0])
 				fmt.Println("Address:", response[1])
+				fmt.Println("Passphrase:", response[0])
 				matches++
 				if matches == addressMax {
 					done = true
