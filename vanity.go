@@ -12,6 +12,7 @@ import (
 
 var addressPrefix string
 var entropyValue int
+var caseInsensitive = false
 var addressConfig = arkcoin.ArkCoinMain
 
 func generate(channel chan []string) {
@@ -19,7 +20,9 @@ func generate(channel chan []string) {
 	passphrase, _ := bip39.NewMnemonic(entropy)
 	publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, addressConfig).PublicKey
 	address := publicKey.Address()
-	if strings.Index(address, addressPrefix) == 0 {
+	if caseInsensitive && strings.Index(strings.ToLower(address), strings.ToLower(addressPrefix)) == 0 {
+		channel <- []string{passphrase, address, "Y"}
+	} else if strings.Index(address, addressPrefix) == 0 {
 		channel <- []string{passphrase, address, "Y"}
 	} else {
 		channel <- []string{passphrase, address, ""}
@@ -40,6 +43,8 @@ func main() {
 	flag.IntVar(&threads, "t", 100, "Threads to run")
 	flag.StringVar(&wif, "wif", "170", "WIF")
 	flag.StringVar(&wif, "w", "170", "WIF")
+	flag.BoolVar(&caseInsensitive, "case-insensitive", false, "Case insensitive")
+	flag.BoolVar(&caseInsensitive, "i", false, "Case insensitive")
 	flag.Parse()
 
 	if len(addressPrefix) <= 1 {
