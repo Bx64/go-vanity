@@ -27,15 +27,15 @@ func generate(channel chan []string) {
 }
 
 func main() {
-	var publicKeyHash int
+	var addressFormat int
 	var threads int
 	var wif string
 	flag.StringVar(&addressPrefix, "prefix", "", "Specify entropy")
 	flag.StringVar(&addressPrefix, "p", "", "Specify entropy")
 	flag.IntVar(&entropyValue, "entropy", 128, "Specify entropy")
 	flag.IntVar(&entropyValue, "e", 128, "Specify entropy")
-	flag.IntVar(&publicKeyHash, "public-key-hash", 23, "Address Prefix")
-	flag.IntVar(&publicKeyHash, "pk", 23, "Address Prefix")
+	flag.IntVar(&addressFormat, "address-format", 23, "Address Format")
+	flag.IntVar(&addressFormat, "a", 23, "Address Format")
 	flag.IntVar(&threads, "threads", 100, "Threads to run")
 	flag.IntVar(&threads, "t", 100, "Threads to run")
 	flag.StringVar(&wif, "wif", "170", "WIF")
@@ -54,7 +54,7 @@ func main() {
 
 	addressConfig = &arkcoin.Params{
 		DumpedPrivateKeyHeader: []byte(wif),
-		AddressHeader:          byte(publicKeyHash),
+		AddressHeader:          byte(addressFormat),
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
