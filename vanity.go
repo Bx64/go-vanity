@@ -6,26 +6,20 @@ import (
 	"github.com/kristjank/ark-go/arkcoin"
 	"github.com/tyler-smith/go-bip39"
 	"math/rand"
-	"strconv"
 	"strings"
 	"time"
 )
 
-var flag_prefix string
-var flag_entropy string
-var flag_publicKeyHash string
-var flag_threads string
-var flag_wif string
-
-var entropyBase int
+var addressPrefix string
+var entropyValue int
 var addressConfig = arkcoin.ArkCoinMain
 
 func generate(channel chan []string) {
-	entropy, _ := bip39.NewEntropy(entropyBase)
+	entropy, _ := bip39.NewEntropy(entropyValue)
 	passphrase, _ := bip39.NewMnemonic(entropy)
 	publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, addressConfig).PublicKey
 	address := publicKey.Address()
-	if strings.Index(address, flag_prefix) == 0 {
+	if strings.Index(address, addressPrefix) == 0 {
 		channel <- []string{passphrase, address, "Y"}
 	} else {
 		channel <- []string{passphrase, address, ""}
@@ -33,38 +27,34 @@ func generate(channel chan []string) {
 }
 
 func main() {
-	flag.StringVar(&flag_prefix, "prefix", "", "Specify entropy")
-	flag.StringVar(&flag_entropy, "entropy", "128", "Specify entropy")
-	flag.StringVar(&flag_publicKeyHash, "public-key-hash", "23", "Address Prefix")
-	flag.StringVar(&flag_threads, "threads", "100", "Threads to run")
-	flag.StringVar(&flag_wif, "wif", "170", "WIF")
+	var publicKeyHash int
+	var threads int
+	var wif string
+	flag.StringVar(&addressPrefix, "prefix", "", "Specify entropy")
+	flag.StringVar(&addressPrefix, "p", "", "Specify entropy")
+	flag.IntVar(&entropyValue, "entropy", 128, "Specify entropy")
+	flag.IntVar(&entropyValue, "e", 128, "Specify entropy")
+	flag.IntVar(&publicKeyHash, "public-key-hash", 23, "Address Prefix")
+	flag.IntVar(&publicKeyHash, "pk", 23, "Address Prefix")
+	flag.IntVar(&threads, "threads", 100, "Threads to run")
+	flag.IntVar(&threads, "t", 100, "Threads to run")
+	flag.StringVar(&wif, "wif", "170", "WIF")
+	flag.StringVar(&wif, "w", "170", "WIF")
 	flag.Parse()
 
-	if len(flag_prefix) <= 1 {
+	if len(addressPrefix) <= 1 {
 		fmt.Println("Must pass prefix as argument. E.g. go run vanity.go -prefix ABCDEFG")
 		return
 	}
 
-	entropyValue, err := strconv.Atoi(flag_entropy)
-	if err != nil {
-		fmt.Println("There was a problem parsing the entropy argument")
-		return
-	}
 	if entropyValue < 128 || entropyValue > 256 {
 		fmt.Println("Entropy value must be between 128 and 256")
 		return
 	}
-	entropyBase = entropyValue
-
-	publicKeyHashValue, err := strconv.Atoi(flag_publicKeyHash)
-	if err != nil {
-		fmt.Println("There was a problem parsing the address prefix argument")
-		return
-	}
 
 	addressConfig = &arkcoin.Params{
-		DumpedPrivateKeyHeader: []byte(flag_wif),
-		AddressHeader:          byte(publicKeyHashValue),
+		DumpedPrivateKeyHeader: []byte(wif),
+		AddressHeader:          byte(publicKeyHash),
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -72,16 +62,9 @@ func main() {
 	start := time.Now()
 	channel := make(chan []string)
 	count := 0
-
-	threadsValue, err := strconv.Atoi(flag_threads)
-	if err != nil {
-		fmt.Println("There was a problem parsing the threads argument")
-		return
-	}
-
-	perBatch := threadsValue
+	perBatch := threads
 	done := false
-	fmt.Println("Looking for Address with prefix:", flag_prefix)
+	fmt.Println("Looking for Address with prefix:", addressPrefix)
 	fmt.Println("")
 	for {
 		for i := 0; i < perBatch; i++ {
