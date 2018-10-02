@@ -13,6 +13,6 @@ dep ensure
 ### Run Vanity Script
 
 ```
-go run vanity.go -prefix ALEX -entropy 128 -address-format 23 -threads 100 -wif 170 -case-insensitive
-go run vanity.go -p ALEX -e 128 -a 23 -t 100 -w 170 -i
+go run vanity.go -prefix ALEX -entropy 128 -address-format 23 -threads 100 -wif 170 -c 1 -case-insensitive
+go run vanity.go -p ALEX -e 128 -a 23 -t 100 -w 170 -c 1 -i
 ```

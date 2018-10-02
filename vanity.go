@@ -12,6 +12,7 @@ import (
 
 var addressPrefix string
 var entropyValue int
+var addressMax int
 var caseInsensitive = false
 var addressConfig = arkcoin.ArkCoinMain
 
@@ -45,6 +46,8 @@ func main() {
 	flag.StringVar(&wif, "w", "170", "WIF")
 	flag.BoolVar(&caseInsensitive, "case-insensitive", false, "Case insensitive")
 	flag.BoolVar(&caseInsensitive, "i", false, "Case insensitive")
+	flag.IntVar(&addressMax, "count", 1, "Quantity of addresses to generate")
+	flag.IntVar(&addressMax, "c", 1, "Quantity of addresses to generate")
 	flag.Parse()
 
 	if len(addressPrefix) <= 1 {
@@ -69,6 +72,7 @@ func main() {
 	count := 0
 	perBatch := threads
 	done := false
+	matches := 0
 	fmt.Println("Looking for Address with prefix:", addressPrefix)
 	fmt.Println("")
 	for {
@@ -77,7 +81,7 @@ func main() {
 		}
 		for i := 0; i < perBatch; i++ {
 			count++
-			if (count % 100000) == 0 {
+			if addressMax == 1 && (count%100000) == 0 {
 				elapsedSoFar := time.Now().Sub(start)
 				fmt.Println("Checked", count, "passphrases within", elapsedSoFar)
 			}
@@ -85,12 +89,18 @@ func main() {
 			if response[2] == "Y" {
 				fmt.Println("Passphrase:", response[0])
 				fmt.Println("Address:", response[1])
-				done = true
-				break
+				matches++
+				if matches == addressMax {
+					done = true
+					break
+				}
 			}
 		}
 		if done {
 			break
 		}
 	}
+
+	elapsedSoFar := time.Now().Sub(start)
+	fmt.Println("Checked", count, "passphrases within", elapsedSoFar)
 }
