@@ -1,5 +1,9 @@
 ## Go Vanity Script
 
+<p align="center">
+    <img src="https://github.com/ark-collective/go-vanity/blob/master/banner.png" />
+</p>
+
 ### Install dep
 
 Follow the instructions [here](https://github.com/golang/dep#installation)
