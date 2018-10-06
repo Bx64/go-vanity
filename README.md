@@ -4,6 +4,13 @@
     <img src="https://github.com/ark-collective/go-vanity/blob/master/banner.png" />
 </p>
 
+### Install Go 1.10
+
+1. Download Go 1.10 [here](https://golang.org/dl/) and install it.
+2. Open up bash and go to the Go home directory: `cd $GOPATH/src`
+3. Clone the repo `git clone git@github.com:ark-collective/go-vanity.git && cd go-vanity`
+4. Start generating some fine addresses (see below)
+
 ### Install dep
 
 Follow the instructions [here](https://github.com/golang/dep#installation)
