@@ -6,6 +6,7 @@ import (
 	"github.com/kristjank/ark-go/arkcoin"
 	"github.com/tyler-smith/go-bip39"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
@@ -51,6 +52,7 @@ func main() {
 	var threads int
 	var wif string
 	var milestone int
+	var fileOutput string
 	flag.StringVar(&addressPrefix, "prefix", "", "Address Prefix to search for")
 	flag.StringVar(&addressPrefix, "p", "", "Address Prefix to search for")
 	flag.StringVar(&addressSuffix, "suffix", "", "Address Suffix to search for")
@@ -71,6 +73,8 @@ func main() {
 	flag.IntVar(&addressMax, "c", 1, "Quantity of addresses to generate")
 	flag.IntVar(&milestone, "milestone", 1000000, "Milestone to log how many passphrases processed")
 	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
+	flag.StringVar(&fileOutput, "output", "results.txt", "File path to output results")
+	flag.StringVar(&fileOutput, "o", "results.txt", "File path to output results")
 	flag.Parse()
 
 	if len(addressPrefix) <= 1 && len(addressSuffix) < 1 {
@@ -152,6 +156,21 @@ func main() {
 				fmt.Println("")
 				fmt.Println("Address:", response[1])
 				fmt.Println("Passphrase:", response[0])
+
+				fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					fmt.Println("Could not open file")
+				} else {
+					_, addressError := fileHandler.WriteString("Address: " + response[1] + "\n")
+					_, passphraseError := fileHandler.WriteString("Passphrase: " + response[0] + "\n")
+
+					if addressError != nil || passphraseError != nil {
+						fmt.Println("Could not write results to file")
+					}
+
+					fileHandler.Close()
+				}
+
 				matches++
 				if matches == addressMax {
 					done = true

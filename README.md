@@ -93,3 +93,9 @@ Quantity of addresses to search for (milestone option doesn't work with more tha
 `-m` or `-milestone`
 
 How often to log progress (E.g. `Checked 73100000 passphrases within 36m43.964012025s`) [default=1000000]
+
+## File Output
+
+`-o` or `-output`
+
+Output results to file [default=results.txt]
