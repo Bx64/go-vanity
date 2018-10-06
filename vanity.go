@@ -75,7 +75,9 @@ func main() {
 	count := 0
 	perBatch := threads
 	batchBenchmark := false
-	batchBenchmarkMax := 1000
+	batchBenchmarkMax := 500
+	benchmarkRun := 1
+	benchmarkRunMax := 5
 	if perBatch == 0 {
 		perBatch = 1
 		batchBenchmark = true
@@ -88,7 +90,7 @@ func main() {
 		count    float64
 		perMs    float64
 	}
-	batches := make(map[int]benchmarkResult, batchBenchmarkMax)
+	batches := make(map[int][]benchmarkResult, batchBenchmarkMax)
 	if batchBenchmark {
 		fmt.Println("Benchmarking...")
 	}
@@ -128,19 +130,29 @@ func main() {
 			if perBatch < batchBenchmarkMax {
 				batchResult.duration = time.Now().Sub(batchResult.start)
 				batchResult.perMs = batchResult.count / (batchResult.duration.Seconds() * 1000)
-				batches[perBatch] = batchResult
+				batches[perBatch] = append(batches[perBatch], batchResult)
 				perBatch++
 			} else {
-				bestBatch := 1
-				for i := 1; i <= batchBenchmarkMax; i++ {
-					if batches[i].perMs > batches[bestBatch].perMs {
-						bestBatch = i
+				if benchmarkRun >= benchmarkRunMax {
+					bestBatch := 1
+					var bestPms float64
+					for i := 1; i <= batchBenchmarkMax; i++ {
+						var totalPms float64
+						for p := 0; p < len(batches[i]); p++ {
+							totalPms += batches[i][p].perMs
+						}
+						pmsAverage := totalPms / float64(len(batches[i]))
+						if pmsAverage > bestPms {
+							bestBatch = i
+							bestPms = pmsAverage
+						}
 					}
+					batchBenchmark = false
+					perBatch = bestBatch
+					fmt.Println("Batch", perBatch, "processed", int(bestPms), "per ms")
+					fmt.Println("Benchmark complete. Threads set to", perBatch)
 				}
-				batchBenchmark = false
-				perBatch = bestBatch
-				fmt.Println("Batch", perBatch, "processed", int(batches[perBatch].perMs), "per ms")
-				fmt.Println("Benchmark complete. Threads set to", perBatch)
+				benchmarkRun++
 			}
 		}
 	}
