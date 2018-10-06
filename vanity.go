@@ -40,8 +40,8 @@ func main() {
 	flag.IntVar(&entropyValue, "e", 128, "Specify entropy")
 	flag.IntVar(&addressFormat, "address-format", 23, "Address Format")
 	flag.IntVar(&addressFormat, "a", 23, "Address Format")
-	flag.IntVar(&threads, "threads", 100, "Threads to run")
-	flag.IntVar(&threads, "t", 100, "Threads to run")
+	flag.IntVar(&threads, "threads", 0, "Threads to run")
+	flag.IntVar(&threads, "t", 0, "Threads to run")
 	flag.StringVar(&wif, "wif", "170", "WIF")
 	flag.StringVar(&wif, "w", "170", "WIF")
 	flag.BoolVar(&caseInsensitive, "case-insensitive", false, "Case insensitive")
@@ -71,16 +71,38 @@ func main() {
 	channel := make(chan []string)
 	count := 0
 	perBatch := threads
+	batchBenchmark := false
+	batchBenchmarkMax := 1000
+	if perBatch == 0 {
+		perBatch = 1
+		batchBenchmark = true
+	}
 	done := false
 	matches := 0
+	type benchmarkResult struct {
+		start    time.Time
+		duration time.Duration
+		count    float64
+		perMs    float64
+	}
+	batches := make(map[int]benchmarkResult, batchBenchmarkMax)
+	if batchBenchmark {
+		fmt.Println("Benchmarking...")
+	}
 	fmt.Println("Looking for Address with prefix:", addressPrefix)
 	fmt.Println("")
 	for {
+		batchResult := benchmarkResult{
+			start:    time.Now(),
+			duration: 0,
+			count:    0,
+		}
 		for i := 0; i < perBatch; i++ {
 			go generate(channel)
 		}
 		for i := 0; i < perBatch; i++ {
 			count++
+			batchResult.count++
 			if addressMax == 1 && (count%100000) == 0 {
 				elapsedSoFar := time.Now().Sub(start)
 				fmt.Println("Checked", count, "passphrases within", elapsedSoFar)
@@ -98,6 +120,25 @@ func main() {
 		}
 		if done {
 			break
+		}
+		if batchBenchmark {
+			if perBatch < batchBenchmarkMax {
+				batchResult.duration = time.Now().Sub(batchResult.start)
+				batchResult.perMs = batchResult.count / (batchResult.duration.Seconds() * 1000)
+				batches[perBatch] = batchResult
+				perBatch++
+			} else {
+				bestBatch := 1
+				for i := 1; i <= batchBenchmarkMax; i++ {
+					if batches[i].perMs > batches[bestBatch].perMs {
+						bestBatch = i
+					}
+				}
+				batchBenchmark = false
+				perBatch = bestBatch
+				fmt.Println("Batch", perBatch, "processed", int(batches[perBatch].perMs), "per ms")
+				fmt.Println("Benchmark complete. Threads set to", perBatch)
+			}
 		}
 	}
 
