@@ -129,7 +129,7 @@ func main() {
 		if done {
 			break
 		}
-		if benchmarkCount >= benchmarkRerunThreshold {
+		if !batchBenchmark && benchmarkCount >= benchmarkRerunThreshold {
 			batchBenchmark = true
 			perBatch = 1
 			batches = make(map[int][]benchmarkResult, batchBenchmarkMax)
@@ -160,6 +160,7 @@ func main() {
 						}
 					}
 					batchBenchmark = false
+					benchmarkCount = 0
 					perBatch = bestBatch
 					fmt.Println("")
 					fmt.Println("Batch", perBatch, "processed", int(bestPms), "per ms")
