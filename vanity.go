@@ -26,7 +26,7 @@ func generate(channel chan []string) {
 	} else if strings.Index(address, addressPrefix) == 0 {
 		channel <- []string{passphrase, address, "Y"}
 	} else {
-		channel <- []string{passphrase, address, ""}
+		channel <- []string{"", "", ""}
 	}
 }
 
