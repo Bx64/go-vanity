@@ -78,6 +78,10 @@ func main() {
 		return
 	}
 
+	if addressPrefixAndSuffix && (len(addressPrefix) == 0 || len(addressSuffix) == 0) {
+		addressPrefixAndSuffix = false
+	}
+
 	if entropyValue < 128 || entropyValue > 256 {
 		fmt.Println("Entropy value must be between 128 and 256")
 		return
