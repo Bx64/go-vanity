@@ -17,6 +17,72 @@ dep ensure
 ### Run Vanity Script
 
 ```
-go run vanity.go -prefix ALEX -entropy 128 -address-format 23 -threads 100 -wif 170 -c 1 -case-insensitive
-go run vanity.go -p ALEX -e 128 -a 23 -t 100 -w 170 -c 1 -i
+go run vanity.go -prefix ALEX -case-insensitive
+go run vanity.go -p ALEX -i
 ```
+
+### Options
+
+## Prefix
+
+`-p` or `-prefix`
+
+Prefix to search for
+
+**Prefix or Suffix required in order to do a search**
+
+## Suffix
+
+`-s` or `-suffix`
+
+Suffix to search for
+
+**Prefix or Suffix required in order to do a search**
+
+## Prefix and Suffix
+
+`-ps` or `-prefix-and-suffix`
+
+Find address when both the Prefix and Suffix match [default=false]
+
+## Entropy
+
+`-e` or `-entropy`
+
+Entropy for an address (E.g. 128 = 12 words, 256 = 24 words) [min=128 max=256 default=128]
+
+## Address Format
+
+`-a` or `-address-format`
+
+First letter of address (E.g. 23 = A, 30 = D). This is to search for addresses based on network [default=23]
+
+## Threads
+
+`-t` or `-threads`
+
+How many threads to use when searching for addresses. "0" enables a benchmark to try and work out the best value [default=100]
+
+## WIF
+
+`-w` or `-wif`
+
+The network version [default=170]
+
+## Case Insensitive
+
+`-i` or `-case-insensitive`
+
+Whether to check exact case or not [default=false]
+
+## Count
+
+`-c` or `-count`
+
+Quantity of addresses to search for (milestone option doesn't work with more than 1 count) [default=1]
+
+## Milestone
+
+`-m` or `-milestone`
+
+How often to log progress (E.g. `Checked 73100000 passphrases within 36m43.964012025s`) [default=1000000]
