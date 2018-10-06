@@ -34,6 +34,7 @@ func main() {
 	var addressFormat int
 	var threads int
 	var wif string
+	var milestone int
 	flag.StringVar(&addressPrefix, "prefix", "", "Specify entropy")
 	flag.StringVar(&addressPrefix, "p", "", "Specify entropy")
 	flag.IntVar(&entropyValue, "entropy", 128, "Specify entropy")
@@ -48,6 +49,8 @@ func main() {
 	flag.BoolVar(&caseInsensitive, "i", false, "Case insensitive")
 	flag.IntVar(&addressMax, "count", 1, "Quantity of addresses to generate")
 	flag.IntVar(&addressMax, "c", 1, "Quantity of addresses to generate")
+	flag.IntVar(&milestone, "milestone", 1000000, "Milestone to log how many passphrases processed")
+	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
 	flag.Parse()
 
 	if len(addressPrefix) <= 1 {
@@ -103,9 +106,9 @@ func main() {
 		for i := 0; i < perBatch; i++ {
 			count++
 			batchResult.count++
-			if addressMax == 1 && (count%100000) == 0 {
+			if (count % milestone) == 0 {
 				elapsedSoFar := time.Now().Sub(start)
-				fmt.Println("Checked", count, "passphrases within", elapsedSoFar)
+				fmt.Printf("\033[2KChecked %d passphrases within %s\r", count, elapsedSoFar)
 			}
 			response := <-channel
 			if response[2] == "Y" {
