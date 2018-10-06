@@ -73,7 +73,7 @@ func main() {
 	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
 	flag.Parse()
 
-	if len(addressPrefix) <= 1 && len(addressSuffix) <= 1 {
+	if len(addressPrefix) <= 1 && len(addressSuffix) < 1 {
 		fmt.Println("Must pass prefix and/or suffix as argument. E.g. go run vanity.go -prefix ABC -suffix DEF")
 		return
 	}
