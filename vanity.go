@@ -145,6 +145,7 @@ func main() {
 			}
 			response := <-channel
 			if response[2] == "Y" {
+				fmt.Println("")
 				fmt.Println("Address:", response[1])
 				fmt.Println("Passphrase:", response[0])
 				matches++
