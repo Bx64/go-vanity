@@ -79,7 +79,7 @@ func main() {
 	benchmarkCount := 0
 	benchmarkRerunThreshold := 10000000
 	benchmarkRun := 1
-	benchmarkRunMax := 5
+	benchmarkRunMax := 10
 	if perBatch == 0 {
 		perBatch = 1
 		batchBenchmark = true
