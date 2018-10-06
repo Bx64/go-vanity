@@ -11,6 +11,8 @@ import (
 )
 
 var addressPrefix string
+var addressSuffix string
+var addressPrefixAndSuffix bool
 var entropyValue int
 var addressMax int
 var caseInsensitive = false
@@ -21,9 +23,23 @@ func generate(channel chan []string) {
 	passphrase, _ := bip39.NewMnemonic(entropy)
 	publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, addressConfig).PublicKey
 	address := publicKey.Address()
-	if caseInsensitive && strings.Index(strings.ToLower(address), strings.ToLower(addressPrefix)) == 0 {
-		channel <- []string{passphrase, address, "Y"}
-	} else if strings.Index(address, addressPrefix) == 0 {
+	hasPrefix := false
+	hasSuffix := false
+	if len(addressPrefix) > 0 {
+		if caseInsensitive {
+			hasPrefix = strings.HasPrefix(strings.ToLower(address), strings.ToLower(addressPrefix))
+		} else {
+			hasPrefix = strings.HasPrefix(address, addressPrefix)
+		}
+	}
+	if len(addressSuffix) > 0 {
+		if caseInsensitive {
+			hasSuffix = strings.HasSuffix(strings.ToLower(address), strings.ToLower(addressSuffix))
+		} else {
+			hasSuffix = strings.HasSuffix(address, addressSuffix)
+		}
+	}
+	if (addressPrefixAndSuffix && hasPrefix && hasSuffix) || (!addressPrefixAndSuffix && (hasPrefix || hasSuffix)) {
 		channel <- []string{passphrase, address, "Y"}
 	} else {
 		channel <- []string{"", "", ""}
@@ -35,8 +51,12 @@ func main() {
 	var threads int
 	var wif string
 	var milestone int
-	flag.StringVar(&addressPrefix, "prefix", "", "Specify entropy")
-	flag.StringVar(&addressPrefix, "p", "", "Specify entropy")
+	flag.StringVar(&addressPrefix, "prefix", "", "Address Prefix to search for")
+	flag.StringVar(&addressPrefix, "p", "", "Address Prefix to search for")
+	flag.StringVar(&addressSuffix, "suffix", "", "Address Suffix to search for")
+	flag.StringVar(&addressSuffix, "s", "", "Address Suffix to search for")
+	flag.BoolVar(&addressPrefixAndSuffix, "prefix-and-suffix", false, "Address must include prefix and suffix")
+	flag.BoolVar(&addressPrefixAndSuffix, "ps", false, "Address must include prefix and suffix")
 	flag.IntVar(&entropyValue, "entropy", 128, "Specify entropy")
 	flag.IntVar(&entropyValue, "e", 128, "Specify entropy")
 	flag.IntVar(&addressFormat, "address-format", 23, "Address Format")
@@ -53,8 +73,8 @@ func main() {
 	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
 	flag.Parse()
 
-	if len(addressPrefix) <= 1 {
-		fmt.Println("Must pass prefix as argument. E.g. go run vanity.go -prefix ABCDEFG")
+	if len(addressPrefix) <= 1 && len(addressSuffix) <= 1 {
+		fmt.Println("Must pass prefix and/or suffix as argument. E.g. go run vanity.go -prefix ABC -suffix DEF")
 		return
 	}
 
@@ -96,7 +116,15 @@ func main() {
 	if batchBenchmark {
 		fmt.Println("Benchmarking...")
 	}
-	fmt.Println("Looking for Address with prefix:", addressPrefix)
+	if len(addressPrefix) > 0 && len(addressSuffix) == 0 {
+		fmt.Printf("Looking for Address with prefix '%s'", addressPrefix)
+	} else if len(addressSuffix) > 0 && len(addressPrefix) == 0 {
+		fmt.Printf("Looking for Address with suffix '%s'", addressSuffix)
+	} else if addressPrefixAndSuffix {
+		fmt.Printf("Looking for Address with prefix '%s' AND suffix '%s'", addressPrefix, addressSuffix)
+	} else {
+		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'", addressPrefix, addressSuffix)
+	}
 	fmt.Println("")
 	for {
 		batchResult := benchmarkResult{
