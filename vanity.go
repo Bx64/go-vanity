@@ -76,6 +76,8 @@ func main() {
 	perBatch := threads
 	batchBenchmark := false
 	batchBenchmarkMax := 500
+	benchmarkCount := 0
+	benchmarkRerunThreshold := 10000000
 	benchmarkRun := 1
 	benchmarkRunMax := 5
 	if perBatch == 0 {
@@ -107,6 +109,7 @@ func main() {
 		}
 		for i := 0; i < perBatch; i++ {
 			count++
+			benchmarkCount++
 			batchResult.count++
 			if (count % milestone) == 0 {
 				elapsedSoFar := time.Now().Sub(start)
@@ -125,6 +128,15 @@ func main() {
 		}
 		if done {
 			break
+		}
+		if benchmarkCount >= benchmarkRerunThreshold {
+			batchBenchmark = true
+			perBatch = 1
+			batches = make(map[int][]benchmarkResult, batchBenchmarkMax)
+			if batchBenchmark {
+				fmt.Println("")
+				fmt.Println("Benchmarking...")
+			}
 		}
 		if batchBenchmark {
 			if perBatch < batchBenchmarkMax {
@@ -149,6 +161,7 @@ func main() {
 					}
 					batchBenchmark = false
 					perBatch = bestBatch
+					fmt.Println("")
 					fmt.Println("Batch", perBatch, "processed", int(bestPms), "per ms")
 					fmt.Println("Benchmark complete. Threads set to", perBatch)
 				}
