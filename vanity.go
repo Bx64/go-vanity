@@ -159,18 +159,20 @@ func main() {
 				fmt.Println("Address:", response[1])
 				fmt.Println("Passphrase:", response[0])
 
-				fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-				if err != nil {
-					fmt.Println("Could not open file")
-				} else {
-					_, addressError := fileHandler.WriteString("Address: " + response[1] + "\n")
-					_, passphraseError := fileHandler.WriteString("Passphrase: " + response[0] + "\n")
+				if fileOutput != "" {
+					fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					if err != nil {
+						fmt.Println("Could not open file")
+					} else {
+						_, addressError := fileHandler.WriteString("Address: " + response[1] + "\n")
+						_, passphraseError := fileHandler.WriteString("Passphrase: " + response[0] + "\n")
 
-					if addressError != nil || passphraseError != nil {
-						fmt.Println("Could not write results to file")
+						if addressError != nil || passphraseError != nil {
+							fmt.Println("Could not write results to file")
+						}
+
+						fileHandler.Close()
 					}
-
-					fileHandler.Close()
 				}
 
 				matches++
