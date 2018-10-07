@@ -11,46 +11,89 @@ import (
 	"time"
 )
 
-var addressPrefix string
-var addressSuffix string
-var addressPrefixAndSuffix bool
-var entropyValue int
-var addressMax int
-var caseInsensitive = false
-var addressConfig = arkcoin.ArkCoinMain
+type NetworkJob struct {
+	Prefix          string
+	Suffix          string
+	PrefixAndSuffix bool
+	CaseInsensitive bool
+}
 
-func generate(channel chan []string) {
+type Network struct {
+	Jobs          []NetworkJob
+	AddressConfig *arkcoin.Params
+}
+
+type Result struct {
+	Address    string
+	Passphrase string
+	Matches    bool
+}
+
+var networks []Network
+
+var entropyValue int
+var addressCount int
+
+func generate(channel chan []Result) {
 	entropy, _ := bip39.NewEntropy(entropyValue)
 	passphrase, _ := bip39.NewMnemonic(entropy)
-	publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, addressConfig).PublicKey
-	address := publicKey.Address()
-	hasPrefix := false
-	hasSuffix := false
-	if len(addressPrefix) > 0 {
-		if caseInsensitive {
-			hasPrefix = strings.HasPrefix(strings.ToLower(address), strings.ToLower(addressPrefix))
-		} else {
-			hasPrefix = strings.HasPrefix(address, addressPrefix)
+
+	results := make([]Result, 0)
+	for _, network := range networks {
+		publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, network.AddressConfig).PublicKey
+		address := publicKey.Address()
+
+		for _, job := range network.Jobs {
+			hasPrefix := false
+			hasSuffix := false
+			if len(job.Prefix) > 0 {
+				if job.CaseInsensitive {
+					hasPrefix = strings.HasPrefix(strings.ToLower(address), strings.ToLower(job.Prefix))
+				} else {
+					hasPrefix = strings.HasPrefix(address, job.Prefix)
+				}
+			}
+			if len(job.Suffix) > 0 {
+				if job.CaseInsensitive {
+					hasSuffix = strings.HasSuffix(strings.ToLower(address), strings.ToLower(job.Suffix))
+				} else {
+					hasSuffix = strings.HasSuffix(address, job.Suffix)
+				}
+			}
+
+			if (job.PrefixAndSuffix && hasPrefix && hasSuffix) || (!job.PrefixAndSuffix && (hasPrefix || hasSuffix)) {
+				results = append(
+					results,
+					Result{
+						Address:    address,
+						Passphrase: passphrase,
+						Matches:    true,
+					},
+				)
+			} else {
+				results = append(
+					results,
+					Result{
+						Address:    "",
+						Passphrase: "",
+						Matches:    false,
+					},
+				)
+			}
 		}
-	}
-	if len(addressSuffix) > 0 {
-		if caseInsensitive {
-			hasSuffix = strings.HasSuffix(strings.ToLower(address), strings.ToLower(addressSuffix))
-		} else {
-			hasSuffix = strings.HasSuffix(address, addressSuffix)
-		}
-	}
-	if (addressPrefixAndSuffix && hasPrefix && hasSuffix) || (!addressPrefixAndSuffix && (hasPrefix || hasSuffix)) {
-		channel <- []string{passphrase, address, "Y"}
-	} else {
-		channel <- []string{"", "", ""}
+
+		channel <- results
 	}
 }
 
 func main() {
+	var addressPrefix string
+	var addressSuffix string
+	var addressPrefixAndSuffix bool
 	var addressFormat int
 	var threads int
 	var wif string
+	var caseInsensitive bool
 	var milestone int
 	var fileOutput string
 	flag.StringVar(&addressPrefix, "prefix", "", "Address Prefix to search for")
@@ -69,8 +112,8 @@ func main() {
 	flag.StringVar(&wif, "w", "170", "WIF")
 	flag.BoolVar(&caseInsensitive, "case-insensitive", false, "Case insensitive")
 	flag.BoolVar(&caseInsensitive, "i", false, "Case insensitive")
-	flag.IntVar(&addressMax, "count", 1, "Quantity of addresses to generate")
-	flag.IntVar(&addressMax, "c", 1, "Quantity of addresses to generate")
+	flag.IntVar(&addressCount, "count", 1, "Quantity of addresses to generate")
+	flag.IntVar(&addressCount, "c", 1, "Quantity of addresses to generate")
 	flag.IntVar(&milestone, "milestone", 1000000, "Milestone to log how many passphrases processed")
 	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
 	flag.StringVar(&fileOutput, "output", "results.txt", "File path to output results")
@@ -79,6 +122,7 @@ func main() {
 
 	if len(addressPrefix) <= 1 && len(addressSuffix) < 1 {
 		fmt.Println("Must pass prefix and/or suffix as argument. E.g. go run vanity.go -prefix ABC -suffix DEF")
+
 		return
 	}
 
@@ -88,23 +132,36 @@ func main() {
 
 	if entropyValue < 128 || entropyValue > 256 {
 		fmt.Println("Entropy value must be between 128 and 256")
+
 		return
 	}
 
-	addressConfig = &arkcoin.Params{
+	addressConfig := &arkcoin.Params{
 		DumpedPrivateKeyHeader: []byte(wif),
 		AddressHeader:          byte(addressFormat),
 	}
 
+	networks = append(networks, Network{
+		AddressConfig: addressConfig,
+		Jobs: []NetworkJob{
+			{
+				Prefix:          addressPrefix,
+				Suffix:          addressSuffix,
+				PrefixAndSuffix: addressPrefixAndSuffix,
+				CaseInsensitive: caseInsensitive,
+			},
+		},
+	})
+
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	start := time.Now()
-	channel := make(chan []string)
+	channel := make(chan []Result)
 	count := 0
 	perBatch := threads
 	batchBenchmark := false
 	batchBenchmarkMax := 500
-  rerunBenchmarks := false
+	rerunBenchmarks := false
 	benchmarkCount := 0
 	benchmarkRerunThreshold := 10000000
 	benchmarkRun := 1
@@ -112,7 +169,7 @@ func main() {
 	if perBatch == 0 {
 		perBatch = 1
 		batchBenchmark = true
-    rerunBenchmarks = true
+		rerunBenchmarks = true
 	}
 	done := false
 	matches := 0
@@ -127,15 +184,14 @@ func main() {
 		fmt.Println("Benchmarking...")
 	}
 	if len(addressPrefix) > 0 && len(addressSuffix) == 0 {
-		fmt.Printf("Looking for Address with prefix '%s'", addressPrefix)
+		fmt.Printf("Looking for Address with prefix '%s'\n", addressPrefix)
 	} else if len(addressSuffix) > 0 && len(addressPrefix) == 0 {
-		fmt.Printf("Looking for Address with suffix '%s'", addressSuffix)
+		fmt.Printf("Looking for Address with suffix '%s'\n", addressSuffix)
 	} else if addressPrefixAndSuffix {
-		fmt.Printf("Looking for Address with prefix '%s' AND suffix '%s'", addressPrefix, addressSuffix)
+		fmt.Printf("Looking for Address with prefix '%s' AND suffix '%s'\n", addressPrefix, addressSuffix)
 	} else {
-		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'", addressPrefix, addressSuffix)
+		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
 	}
-	fmt.Println("")
 	for {
 		batchResult := benchmarkResult{
 			start:    time.Now(),
@@ -154,31 +210,33 @@ func main() {
 				fmt.Printf("\033[2KChecked %d passphrases within %s\r", count, elapsedSoFar)
 			}
 			response := <-channel
-			if response[2] == "Y" {
-				fmt.Println("")
-				fmt.Println("Address:", response[1])
-				fmt.Println("Passphrase:", response[0])
+			for _, result := range response {
+				if result.Matches {
+					fmt.Println("")
+					fmt.Println("Address:", result.Address)
+					fmt.Println("Passphrase:", result.Passphrase)
 
-				if fileOutput != "" {
-					fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					if err != nil {
-						fmt.Println("Could not open file")
-					} else {
-						_, addressError := fileHandler.WriteString("Address: " + response[1] + "\n")
-						_, passphraseError := fileHandler.WriteString("Passphrase: " + response[0] + "\n")
+					if fileOutput != "" {
+						fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+						if err != nil {
+							fmt.Println("Could not open file")
+						} else {
+							_, addressError := fileHandler.WriteString("Address: " + result.Address + "\n")
+							_, passphraseError := fileHandler.WriteString("Passphrase: " + result.Passphrase + "\n")
 
-						if addressError != nil || passphraseError != nil {
-							fmt.Println("Could not write results to file")
+							if addressError != nil || passphraseError != nil {
+								fmt.Println("Could not write results to file")
+							}
+
+							fileHandler.Close()
 						}
-
-						fileHandler.Close()
 					}
-				}
 
-				matches++
-				if matches == addressMax {
-					done = true
-					break
+					matches++
+					if matches == addressCount {
+						done = true
+						break
+					}
 				}
 			}
 		}
