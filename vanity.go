@@ -108,7 +108,7 @@ func main() {
 	benchmarkCount := 0
 	benchmarkRerunThreshold := 10000000
 	benchmarkRun := 1
-	benchmarkRunMax := 10
+	benchmarkRunMax := 3
 	if perBatch == 0 {
 		perBatch = 1
 		batchBenchmark = true
@@ -221,8 +221,10 @@ func main() {
 					fmt.Println("")
 					fmt.Println("Batch", perBatch, "processed", int(bestPms), "per ms")
 					fmt.Println("Benchmark complete. Threads set to", perBatch)
+				} else {
+					perBatch = 1
+					benchmarkRun++
 				}
-				benchmarkRun++
 			}
 		}
 	}
