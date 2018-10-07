@@ -104,6 +104,7 @@ func main() {
 	perBatch := threads
 	batchBenchmark := false
 	batchBenchmarkMax := 500
+  rerunBenchmarks := false
 	benchmarkCount := 0
 	benchmarkRerunThreshold := 10000000
 	benchmarkRun := 1
@@ -111,6 +112,7 @@ func main() {
 	if perBatch == 0 {
 		perBatch = 1
 		batchBenchmark = true
+    rerunBenchmarks = true
 	}
 	done := false
 	matches := 0
@@ -181,7 +183,7 @@ func main() {
 		if done {
 			break
 		}
-		if !batchBenchmark && benchmarkCount >= benchmarkRerunThreshold {
+		if rerunBenchmarks && !batchBenchmark && benchmarkCount >= benchmarkRerunThreshold {
 			batchBenchmark = true
 			perBatch = 1
 			batches = make(map[int][]benchmarkResult, batchBenchmarkMax)
