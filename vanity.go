@@ -43,6 +43,17 @@ func generate(channel chan []Result) {
 			}
 
 			if (job.PrefixAndSuffix && hasPrefix && hasSuffix) || (!job.PrefixAndSuffix && (hasPrefix || hasSuffix)) {
+				alreadyFound := false
+				for _, result := range results {
+					if result.Address == address {
+						alreadyFound = true
+						break
+					}
+				}
+				if alreadyFound {
+					continue
+				}
+
 				results = append(
 					results,
 					Result{
