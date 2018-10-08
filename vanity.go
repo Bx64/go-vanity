@@ -175,8 +175,9 @@ func main() {
 			break
 		}
 		if benchmark.Rerun && !benchmark.Enabled && benchmark.Count >= benchmark.RerunThreshold {
-			benchmark.Enabled = true
 			config.Threads = 1
+			benchmark.Enabled = true
+			benchmark.Run = 1
 			benchmark.Batches = make(map[int][]BenchmarkResult, benchmark.ThreadMax)
 			if benchmark.Enabled {
 				fmt.Println("")
