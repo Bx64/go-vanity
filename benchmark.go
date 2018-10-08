@@ -49,6 +49,7 @@ func ProcessBenchmark(batchResult *BenchmarkResult) {
 			benchmark.Enabled = false
 			benchmark.Count = 0
 			config.Threads = bestBatch
+			config.RunIndefinitely = true
 			fmt.Println("")
 			fmt.Println("Batch", config.Threads, "processed", int(bestPms), "per ms")
 			fmt.Println("Benchmark complete. Threads set to", config.Threads)

@@ -92,6 +92,7 @@ func main() {
 	}
 	done := false
 	matches := 0
+	config.RunIndefinitely = !benchmark.Enabled
 	if benchmark.Enabled {
 		fmt.Println("Benchmarking...")
 	}
@@ -116,10 +117,13 @@ func main() {
 		for i := 0; i < config.Threads; i++ {
 			go generate(channel)
 		}
-		for i := 0; i < config.Threads; i++ {
+		for i := 0; i < config.Threads || config.RunIndefinitely; i++ {
 			count++
 			benchmark.Count++
 			batchResult.count++
+			if benchmark.Count >= benchmark.RerunThreshold {
+				config.RunIndefinitely = false
+			}
 			elapsedSoFar := time.Now().Sub(start)
 			fmt.Printf("\033[2KChecked %v passphrases within %v\r", count, elapsedSoFar)
 			response := <-channel
@@ -151,6 +155,9 @@ func main() {
 						break
 					}
 				}
+			}
+			if config.RunIndefinitely {
+				go generate(channel)
 			}
 		}
 		if done {

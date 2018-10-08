@@ -8,11 +8,13 @@ import (
 )
 
 type GlobalConfig struct {
-	Entropy    int
-	Count      int
-	Threads    int
-	FileOutput string
-	Networks   []Network
+	Entropy         int
+	Count           int
+	Threads         int
+	FileOutput      string
+	Networks        []Network
+	RunIndefinitely bool
+	LoadedConfig    bool
 }
 
 type NetworkJob struct {
