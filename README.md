@@ -24,8 +24,8 @@ dep ensure
 ### Run Vanity Script
 
 ```
-go run vanity.go -prefix ALEX -case-insensitive
-go run vanity.go -p ALEX -i
+go run *.go -prefix ALEX -case-insensitive
+go run *.go -p ALEX -i
 ```
 
 ### Options
