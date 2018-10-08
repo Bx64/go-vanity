@@ -85,7 +85,7 @@ func main() {
 
 	start := time.Now()
 	channel := make(chan []Result)
-	count := 0
+	matchCount := 0
 
 	benchmark = &BenchmarkConfig{
 		ThreadMax:      500,
@@ -101,9 +101,9 @@ func main() {
 		benchmark.Enabled = true
 		benchmark.Rerun = true
 	}
-	done := false
-	matches := 0
+
 	config.RunIndefinitely = !benchmark.Enabled
+	searchFinished := false
 	if benchmark.Enabled {
 		fmt.Println("Benchmarking...")
 	}
@@ -120,7 +120,7 @@ func main() {
 		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
 	}
 	for {
-		batchResult := &BenchmarkResult{
+		benchmarkResult := &BenchmarkResult{
 			start:    time.Now(),
 			duration: 0,
 			count:    0,
@@ -129,14 +129,14 @@ func main() {
 			go generate(channel)
 		}
 		for i := 0; i < config.Threads || config.RunIndefinitely; i++ {
-			count++
+			matchCount++
 			benchmark.Count++
-			batchResult.count++
+			benchmarkResult.count++
 			if benchmark.Count >= benchmark.RerunThreshold {
 				config.RunIndefinitely = false
 			}
 			elapsedSoFar := time.Now().Sub(start)
-			fmt.Printf("\033[2KChecked %v passphrases within %v\r", count, elapsedSoFar)
+			fmt.Printf("\033[2KChecked %v passphrases within %v\r", matchCount, elapsedSoFar)
 			response := <-channel
 			for _, result := range response {
 				if result.Matches {
@@ -160,9 +160,9 @@ func main() {
 						}
 					}
 
-					matches++
-					if config.Count != 0 && matches == config.Count {
-						done = true
+					matchCount++
+					if config.Count != 0 && matchCount == config.Count {
+						searchFinished = true
 						break
 					}
 				}
@@ -171,7 +171,7 @@ func main() {
 				go generate(channel)
 			}
 		}
-		if done {
+		if searchFinished {
 			break
 		}
 		if benchmark.Rerun && !benchmark.Enabled && benchmark.Count >= benchmark.RerunThreshold {
@@ -184,10 +184,10 @@ func main() {
 			}
 		}
 		if benchmark.Enabled {
-			ProcessBenchmark(batchResult)
+			ProcessBenchmark(benchmarkResult)
 		}
 	}
 
 	elapsedSoFar := time.Now().Sub(start)
-	fmt.Println("Checked", count, "passphrases within", elapsedSoFar)
+	fmt.Println("Checked", matchCount, "passphrases within", elapsedSoFar)
 }
