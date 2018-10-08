@@ -1,0 +1,54 @@
+[
+  {
+    "wif": 170,
+    "addressFormat": 23,
+    "jobs": [
+      {
+        "prefix": "Alex",
+        "suffix": "Alex",
+        "prefixAndSuffix": true,
+        "caseInsensitive": true
+      },
+      {
+        "prefix": "AlexB"
+      },
+      {
+        "prefix": "A",
+        "suffix": "test",
+        "prefixAndSuffix": true
+      },
+      {
+        "prefix": "Al",
+        "suffix": "ex",
+        "prefixAndSuffix": true,
+        "caseInsensitive": true
+      }
+    ]
+  },
+  {
+    "wif": 170,
+    "addressFormat": 30,
+    "jobs": [
+      {
+        "prefix": "DAlex",
+        "suffix": "Alex",
+        "prefixAndSuffix": true,
+        "caseInsensitive": true
+      },
+      {
+        "prefix": "DAlexB"
+      },
+      {
+        "prefix": "DA",
+        "suffix": "test",
+        "prefixAndSuffix": true
+      },
+      {
+        "prefix": "DA",
+        "suffix": "ex",
+        "prefixAndSuffix": true,
+        "caseInsensitive": true
+      }
+    ]
+  }
+]

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/kristjank/ark-go/arkcoin"
 )
@@ -59,6 +62,7 @@ func LoadConfig() {
 	var addressFormat int
 	var wif int
 	var caseInsensitive bool
+	var jsonFile string
 
 	flag.StringVar(&addressPrefix, "prefix", "", "Address Prefix to search for")
 	flag.StringVar(&addressPrefix, "p", "", "Address Prefix to search for")
@@ -80,21 +84,43 @@ func LoadConfig() {
 	flag.IntVar(&config.Count, "c", 1, "Quantity of addresses to generate")
 	flag.StringVar(&config.FileOutput, "output", "results.txt", "File path to output results")
 	flag.StringVar(&config.FileOutput, "o", "results.txt", "File path to output results")
+	flag.StringVar(&jsonFile, "json", "", "JSON file path to load search config")
+	flag.StringVar(&jsonFile, "j", "", "JSON file path to load search config")
 	flag.Parse()
 
-	config.Networks = []Network{
-		{
-			Wif:           wif,
-			AddressFormat: addressFormat,
-			Jobs: []NetworkJob{
-				{
-					Prefix:          addressPrefix,
-					Suffix:          addressSuffix,
-					PrefixAndSuffix: addressPrefixAndSuffix,
-					CaseInsensitive: caseInsensitive,
+	if jsonFile != "" {
+		_, err := os.Stat(jsonFile)
+		if err != nil {
+			log.Fatalln("Could not find JSON config file '", jsonFile, "'")
+		}
+
+		configJson, jsonError := ioutil.ReadFile(jsonFile)
+		if jsonError != nil {
+			log.Fatalln("Could not load json config: ", jsonError)
+		}
+
+		parseError := json.Unmarshal(configJson, &config.Networks)
+		if parseError != nil {
+			log.Fatalln("Could not parse json config: ", parseError)
+		}
+
+		config.LoadedConfig = true
+		config.Count = 0
+	} else {
+		config.Networks = []Network{
+			{
+				Wif:           wif,
+				AddressFormat: addressFormat,
+				Jobs: []NetworkJob{
+					{
+						Prefix:          addressPrefix,
+						Suffix:          addressSuffix,
+						PrefixAndSuffix: addressPrefixAndSuffix,
+						CaseInsensitive: caseInsensitive,
+					},
 				},
 			},
-		},
+		}
 	}
 
 	if config.Entropy < 128 || config.Entropy > 256 {

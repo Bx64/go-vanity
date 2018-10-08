@@ -107,17 +107,28 @@ func main() {
 	if benchmark.Enabled {
 		fmt.Println("Benchmarking...")
 	}
-	addressPrefix := config.Networks[0].Jobs[0].Prefix
-	addressSuffix := config.Networks[0].Jobs[0].Suffix
-	addressPrefixAndSuffix := config.Networks[0].Jobs[0].PrefixAndSuffix
-	if len(addressPrefix) > 0 && len(addressSuffix) == 0 {
-		fmt.Printf("Looking for Address with prefix '%s'\n", addressPrefix)
-	} else if len(addressSuffix) > 0 && len(addressPrefix) == 0 {
-		fmt.Printf("Looking for Address with suffix '%s'\n", addressSuffix)
-	} else if addressPrefixAndSuffix {
-		fmt.Printf("Looking for Address with prefix '%s' AND suffix '%s'\n", addressPrefix, addressSuffix)
+	jobCount := 0
+	for _, network := range config.Networks {
+		jobCount += len(network.Jobs)
+	}
+	if config.LoadedConfig {
+		fmt.Printf("Loaded config file with %v networks totalling %v jobs\n\n", len(config.Networks), jobCount)
+
+		fmt.Println("Only the following options are used when using a file import:")
+		fmt.Println("  entropy, threads, output")
 	} else {
-		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
+		addressPrefix := config.Networks[0].Jobs[0].Prefix
+		addressSuffix := config.Networks[0].Jobs[0].Suffix
+		addressPrefixAndSuffix := config.Networks[0].Jobs[0].PrefixAndSuffix
+		if len(addressPrefix) > 0 && len(addressSuffix) == 0 {
+			fmt.Printf("Looking for Address with prefix '%s'\n", addressPrefix)
+		} else if len(addressSuffix) > 0 && len(addressPrefix) == 0 {
+			fmt.Printf("Looking for Address with suffix '%s'\n", addressSuffix)
+		} else if addressPrefixAndSuffix {
+			fmt.Printf("Looking for Address with prefix '%s' AND suffix '%s'\n", addressPrefix, addressSuffix)
+		} else {
+			fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
+		}
 	}
 	for {
 		benchmarkResult := &BenchmarkResult{
