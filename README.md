@@ -88,12 +88,6 @@ Whether to check exact case or not [default=false]
 
 Quantity of addresses to search for (milestone option doesn't work with more than 1 count) [default=1]
 
-## Milestone
-
-`-m` or `-milestone`
-
-How often to log progress (E.g. `Checked 73100000 passphrases within 36m43.964012025s`) [default=1000000]
-
 ## File Output
 
 `-o` or `-output`
