@@ -21,6 +21,10 @@ func generate(channel chan []Result) {
 		address := publicKey.Address()
 
 		for _, job := range network.Jobs {
+			if job.Skip {
+				continue
+			}
+
 			hasPrefix := false
 			hasSuffix := false
 			if len(job.Prefix) > 0 {
