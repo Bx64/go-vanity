@@ -130,6 +130,7 @@ func main() {
 			fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
 		}
 	}
+	milestoneCount := 0
 	for {
 		benchmarkResult := &BenchmarkResult{
 			start:    time.Now(),
@@ -140,14 +141,18 @@ func main() {
 			go generate(channel)
 		}
 		for i := 0; i < config.Threads || config.RunIndefinitely; i++ {
+			milestoneCount++
 			matchCount++
 			benchmark.Count++
 			benchmarkResult.count++
 			if benchmark.Count >= benchmark.RerunThreshold {
 				config.RunIndefinitely = false
 			}
-			elapsedSoFar := time.Now().Sub(start)
-			fmt.Printf("\033[2KChecked %v passphrases within %v\r", matchCount, elapsedSoFar)
+			if milestoneCount > 1000 {
+				milestoneCount = 0
+				elapsedSoFar := time.Now().Sub(start)
+				fmt.Printf("\033[2KChecked %v passphrases within %v\r", matchCount, elapsedSoFar)
+			}
 			response := <-channel
 			for _, result := range response {
 				if result.Matches {
