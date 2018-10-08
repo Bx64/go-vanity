@@ -88,6 +88,12 @@ Whether to check exact case or not [default=false]
 
 Quantity of addresses to search for (milestone option doesn't work with more than 1 count) [default=1]
 
+## JSON Import
+
+`-j` or `-json`
+
+Loads in a JSON file to search for batch results. Sample can be found [here](sample-config.json)
+
 ## File Output
 
 `-o` or `-output`
