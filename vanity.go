@@ -1,45 +1,22 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"github.com/kristjank/ark-go/arkcoin"
-	"github.com/tyler-smith/go-bip39"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kristjank/ark-go/arkcoin"
+	"github.com/tyler-smith/go-bip39"
 )
 
-type NetworkJob struct {
-	Prefix          string
-	Suffix          string
-	PrefixAndSuffix bool
-	CaseInsensitive bool
-}
-
-type Network struct {
-	Jobs          []NetworkJob
-	AddressConfig *arkcoin.Params
-}
-
-type Result struct {
-	Address    string
-	Passphrase string
-	Matches    bool
-}
-
-var networks []Network
-
-var entropyValue int
-var addressCount int
-
 func generate(channel chan []Result) {
-	entropy, _ := bip39.NewEntropy(entropyValue)
+	entropy, _ := bip39.NewEntropy(config.Entropy)
 	passphrase, _ := bip39.NewMnemonic(entropy)
 
 	results := make([]Result, 0)
-	for _, network := range networks {
+	for _, network := range config.Networks {
 		publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, network.AddressConfig).PublicKey
 		address := publicKey.Address()
 
@@ -87,102 +64,36 @@ func generate(channel chan []Result) {
 }
 
 func main() {
-	var addressPrefix string
-	var addressSuffix string
-	var addressPrefixAndSuffix bool
-	var addressFormat int
-	var threads int
-	var wif string
-	var caseInsensitive bool
-	var milestone int
-	var fileOutput string
-	flag.StringVar(&addressPrefix, "prefix", "", "Address Prefix to search for")
-	flag.StringVar(&addressPrefix, "p", "", "Address Prefix to search for")
-	flag.StringVar(&addressSuffix, "suffix", "", "Address Suffix to search for")
-	flag.StringVar(&addressSuffix, "s", "", "Address Suffix to search for")
-	flag.BoolVar(&addressPrefixAndSuffix, "prefix-and-suffix", false, "Address must include prefix and suffix")
-	flag.BoolVar(&addressPrefixAndSuffix, "ps", false, "Address must include prefix and suffix")
-	flag.IntVar(&entropyValue, "entropy", 128, "Specify entropy")
-	flag.IntVar(&entropyValue, "e", 128, "Specify entropy")
-	flag.IntVar(&addressFormat, "address-format", 23, "Address Format")
-	flag.IntVar(&addressFormat, "a", 23, "Address Format")
-	flag.IntVar(&threads, "threads", 100, "Threads to run")
-	flag.IntVar(&threads, "t", 100, "Threads to run")
-	flag.StringVar(&wif, "wif", "170", "WIF")
-	flag.StringVar(&wif, "w", "170", "WIF")
-	flag.BoolVar(&caseInsensitive, "case-insensitive", false, "Case insensitive")
-	flag.BoolVar(&caseInsensitive, "i", false, "Case insensitive")
-	flag.IntVar(&addressCount, "count", 1, "Quantity of addresses to generate")
-	flag.IntVar(&addressCount, "c", 1, "Quantity of addresses to generate")
-	flag.IntVar(&milestone, "milestone", 1000000, "Milestone to log how many passphrases processed")
-	flag.IntVar(&milestone, "m", 1000000, "Milestone to log how many passphrases processed")
-	flag.StringVar(&fileOutput, "output", "results.txt", "File path to output results")
-	flag.StringVar(&fileOutput, "o", "results.txt", "File path to output results")
-	flag.Parse()
-
-	if len(addressPrefix) <= 1 && len(addressSuffix) < 1 {
-		fmt.Println("Must pass prefix and/or suffix as argument. E.g. go run vanity.go -prefix ABC -suffix DEF")
-
-		return
-	}
-
-	if addressPrefixAndSuffix && (len(addressPrefix) == 0 || len(addressSuffix) == 0) {
-		addressPrefixAndSuffix = false
-	}
-
-	if entropyValue < 128 || entropyValue > 256 {
-		fmt.Println("Entropy value must be between 128 and 256")
-
-		return
-	}
-
-	addressConfig := &arkcoin.Params{
-		DumpedPrivateKeyHeader: []byte(wif),
-		AddressHeader:          byte(addressFormat),
-	}
-
-	networks = append(networks, Network{
-		AddressConfig: addressConfig,
-		Jobs: []NetworkJob{
-			{
-				Prefix:          addressPrefix,
-				Suffix:          addressSuffix,
-				PrefixAndSuffix: addressPrefixAndSuffix,
-				CaseInsensitive: caseInsensitive,
-			},
-		},
-	})
+	LoadConfig()
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	start := time.Now()
 	channel := make(chan []Result)
 	count := 0
-	perBatch := threads
-	batchBenchmark := false
-	batchBenchmarkMax := 500
-	rerunBenchmarks := false
-	benchmarkCount := 0
-	benchmarkRerunThreshold := 10000000
-	benchmarkRun := 1
-	benchmarkRunMax := 3
-	if perBatch == 0 {
-		perBatch = 1
-		batchBenchmark = true
-		rerunBenchmarks = true
+
+	benchmark = &BenchmarkConfig{
+		ThreadMax:      500,
+		Rerun:          false,
+		RerunThreshold: 10000000,
+		Run:            1,
+		RunMax:         3,
+		Batches:        make(map[int][]BenchmarkResult, 500),
+	}
+
+	if config.Threads == 0 {
+		config.Threads = 1
+		benchmark.Enabled = true
+		benchmark.Rerun = true
 	}
 	done := false
 	matches := 0
-	type benchmarkResult struct {
-		start    time.Time
-		duration time.Duration
-		count    float64
-		perMs    float64
-	}
-	batches := make(map[int][]benchmarkResult, batchBenchmarkMax)
-	if batchBenchmark {
+	if benchmark.Enabled {
 		fmt.Println("Benchmarking...")
 	}
+	addressPrefix := config.Networks[0].Jobs[0].Prefix
+	addressSuffix := config.Networks[0].Jobs[0].Suffix
+	addressPrefixAndSuffix := config.Networks[0].Jobs[0].PrefixAndSuffix
 	if len(addressPrefix) > 0 && len(addressSuffix) == 0 {
 		fmt.Printf("Looking for Address with prefix '%s'\n", addressPrefix)
 	} else if len(addressSuffix) > 0 && len(addressPrefix) == 0 {
@@ -193,31 +104,29 @@ func main() {
 		fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
 	}
 	for {
-		batchResult := benchmarkResult{
+		batchResult := &BenchmarkResult{
 			start:    time.Now(),
 			duration: 0,
 			count:    0,
 		}
-		for i := 0; i < perBatch; i++ {
+		for i := 0; i < config.Threads; i++ {
 			go generate(channel)
 		}
-		for i := 0; i < perBatch; i++ {
+		for i := 0; i < config.Threads; i++ {
 			count++
-			benchmarkCount++
+			benchmark.Count++
 			batchResult.count++
-			if (count % milestone) == 0 {
-				elapsedSoFar := time.Now().Sub(start)
-				fmt.Printf("\033[2KChecked %d passphrases within %s\r", count, elapsedSoFar)
-			}
+			elapsedSoFar := time.Now().Sub(start)
+			fmt.Printf("\033[2KChecked %v passphrases within %v\r", count, elapsedSoFar)
 			response := <-channel
 			for _, result := range response {
 				if result.Matches {
-					fmt.Println("")
+					fmt.Println(strings.Repeat(" ", 100))
 					fmt.Println("Address:", result.Address)
 					fmt.Println("Passphrase:", result.Passphrase)
 
-					if fileOutput != "" {
-						fileHandler, err := os.OpenFile(fileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					if config.FileOutput != "" {
+						fileHandler, err := os.OpenFile(config.FileOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 						if err != nil {
 							fmt.Println("Could not open file")
 						} else {
@@ -233,7 +142,7 @@ func main() {
 					}
 
 					matches++
-					if matches == addressCount {
+					if config.Count != 0 && matches == config.Count {
 						done = true
 						break
 					}
@@ -243,47 +152,17 @@ func main() {
 		if done {
 			break
 		}
-		if rerunBenchmarks && !batchBenchmark && benchmarkCount >= benchmarkRerunThreshold {
-			batchBenchmark = true
-			perBatch = 1
-			batches = make(map[int][]benchmarkResult, batchBenchmarkMax)
-			if batchBenchmark {
+		if benchmark.Rerun && !benchmark.Enabled && benchmark.Count >= benchmark.RerunThreshold {
+			benchmark.Enabled = true
+			config.Threads = 1
+			benchmark.Batches = make(map[int][]BenchmarkResult, benchmark.ThreadMax)
+			if benchmark.Enabled {
 				fmt.Println("")
 				fmt.Println("Benchmarking...")
 			}
 		}
-		if batchBenchmark {
-			if perBatch < batchBenchmarkMax {
-				batchResult.duration = time.Now().Sub(batchResult.start)
-				batchResult.perMs = batchResult.count / (batchResult.duration.Seconds() * 1000)
-				batches[perBatch] = append(batches[perBatch], batchResult)
-				perBatch++
-			} else {
-				if benchmarkRun >= benchmarkRunMax {
-					bestBatch := 1
-					var bestPms float64
-					for i := 1; i <= batchBenchmarkMax; i++ {
-						var totalPms float64
-						for p := 0; p < len(batches[i]); p++ {
-							totalPms += batches[i][p].perMs
-						}
-						pmsAverage := totalPms / float64(len(batches[i]))
-						if pmsAverage > bestPms {
-							bestBatch = i
-							bestPms = pmsAverage
-						}
-					}
-					batchBenchmark = false
-					benchmarkCount = 0
-					perBatch = bestBatch
-					fmt.Println("")
-					fmt.Println("Batch", perBatch, "processed", int(bestPms), "per ms")
-					fmt.Println("Benchmark complete. Threads set to", perBatch)
-				} else {
-					perBatch = 1
-					benchmarkRun++
-				}
-			}
+		if benchmark.Enabled {
+			ProcessBenchmark(batchResult)
 		}
 	}
 
