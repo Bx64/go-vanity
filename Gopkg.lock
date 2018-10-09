@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
-  revision = "1432d294a5b055c297457c25434efbf13384cc46"
+  revision = "2a560b2036bee5e3679ec2133eb6520b2f195213"
 
 [[projects]]
   name = "github.com/kristjank/ark-go"
@@ -13,14 +13,17 @@
     "arkcoin",
     "arkcoin/base58"
   ]
-  revision = "6fc4a17af7ae114f2fc90dac589839052ddb9ebb"
-  version = "v0.9.6"
+  revision = "ef0397eeb0fdf56f6469ebaecbe31aa905297ee9"
+  version = "v0.9.7"
 
 [[projects]]
   branch = "master"
   name = "github.com/tyler-smith/go-bip39"
-  packages = ["."]
-  revision = "8e7a99b3e716f36d3b080a9a70f9eb45abe4edcc"
+  packages = [
+    ".",
+    "wordlists"
+  ]
+  revision = "95c66720ed7ac2f4b78ddb31d940d59193894f49"
 
 [[projects]]
   branch = "master"
@@ -29,7 +32,7 @@
     "pbkdf2",
     "ripemd160"
   ]
-  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
+  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [solve-meta]
   analyzer-name = "dep"
