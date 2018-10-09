@@ -12,7 +12,10 @@ import (
 )
 
 func generate(channel chan []Result) {
-	entropy, _ := bip39.NewEntropy(config.Entropy)
+	entropy := make([]byte, config.Entropy/8)
+	for id := range entropy {
+		entropy[id] = byte(rand.Intn(256))
+	}
 	passphrase, _ := bip39.NewMnemonic(entropy)
 
 	results := make([]Result, 0)
