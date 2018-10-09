@@ -154,7 +154,8 @@ func main() {
 			if milestoneCount > 1000 {
 				milestoneCount = 0
 				elapsedSoFar := time.Now().Sub(start)
-				fmt.Printf("\033[2KChecked %v passphrases within %v\r", matchCount, elapsedSoFar)
+				keysPerSecond := float64(matchCount) / (elapsedSoFar.Seconds())
+				fmt.Printf("\033[2KChecked %v passphrases within %v [%.0f kp/s]\r", matchCount, elapsedSoFar, keysPerSecond)
 			}
 			response := <-channel
 			for _, result := range response {
