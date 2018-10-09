@@ -86,10 +86,6 @@ func main() {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	start := time.Now()
-	channel := make(chan []Result)
-	matchCount := 0
-
 	benchmark = &BenchmarkConfig{
 		ThreadMax:      500,
 		Rerun:          false,
@@ -133,6 +129,11 @@ func main() {
 			fmt.Printf("Looking for Address with prefix '%s' OR suffix '%s'\n", addressPrefix, addressSuffix)
 		}
 	}
+
+	lastMilestone := time.Now()
+	matchStart := time.Now()
+	channel := make(chan []Result)
+	matchCount := 0
 	milestoneCount := 0
 	for {
 		benchmarkResult := &BenchmarkResult{
@@ -151,11 +152,13 @@ func main() {
 			if benchmark.Count >= benchmark.RerunThreshold {
 				config.RunIndefinitely = false
 			}
-			if milestoneCount > 1000 {
+			milestoneDuration := time.Now().Sub(lastMilestone)
+			if milestoneDuration.Seconds() >= 1 {
+				lastMilestone = time.Now()
 				milestoneCount = 0
-				elapsedSoFar := time.Now().Sub(start)
+				elapsedSoFar := time.Now().Sub(matchStart)
 				keysPerSecond := float64(matchCount) / (elapsedSoFar.Seconds())
-				fmt.Printf("\033[2KChecked %v passphrases within %v [%.0f kp/s]\r", matchCount, elapsedSoFar, keysPerSecond)
+				fmt.Printf("\033[2KChecked %v passphrases within %v [%.0f p/s]\r", matchCount, elapsedSoFar.Round(time.Second), keysPerSecond)
 			}
 			response := <-channel
 			for _, result := range response {
@@ -209,6 +212,6 @@ func main() {
 		}
 	}
 
-	elapsedSoFar := time.Now().Sub(start)
+	elapsedSoFar := time.Now().Sub(matchStart)
 	fmt.Println("Checked", matchCount, "passphrases within", elapsedSoFar)
 }
