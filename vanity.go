@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kristjank/ark-go/arkcoin"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -20,8 +19,9 @@ func generate(channel chan []Result) {
 
 	results := make([]Result, 0)
 	for _, network := range config.Networks {
-		publicKey := arkcoin.NewPrivateKeyFromPassword(passphrase, network.AddressConfig).PublicKey
-		address := publicKey.Address()
+		_, privateKeyRaw := getPrivateKey(passphrase)
+		_, publicKeyRaw := getPublicKey(privateKeyRaw)
+		address := getAddress(publicKeyRaw, network.AddressConfig.AddressHeader)
 
 		for _, job := range network.Jobs {
 			if job.Skip {
@@ -44,6 +44,9 @@ func generate(channel chan []Result) {
 					hasSuffix = strings.HasSuffix(address, job.Suffix)
 				}
 			}
+
+			// fmt.Println(address)
+			// fmt.Println(hasPrefix)
 
 			if (job.PrefixAndSuffix && hasPrefix && hasSuffix) || (!job.PrefixAndSuffix && (hasPrefix || hasSuffix)) {
 				alreadyFound := false

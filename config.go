@@ -42,7 +42,7 @@ type Result struct {
 }
 
 func (job *NetworkJob) IsValid() bool {
-	if len(job.Prefix) <= 1 && len(job.Suffix) < 1 {
+	if len(job.Prefix) <= 1 && (job.Suffix != "" && len(job.Suffix) < 1) {
 		return false
 	}
 
